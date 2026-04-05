@@ -1,4 +1,6 @@
 # maava
+My Attempt At Voice Assistant
+
 highschool comp sci student's attempt at a hackable linux voice assistant (My Attempt At Voice Assistant)
 trying to make this as local as possible rn and have only been doing some basic things (asing for time, media controls, etc)
 
