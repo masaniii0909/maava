@@ -5,9 +5,12 @@ highschool comp sci student's attempt at a hackable linux voice assistant that i
 
 # features
 
-### super ez wakeword setting
+### super ez wakeword setting!
 - in the 15th line, you are easily able to change the wakeword to anything you want, granted the speech recognizer gets it right.
 - NO TRAINING MODELS!! Vosk is really awesome and i just use it for your wakeword to be recognized.
+### custom voices!
+- through the magic that is tts_with_rvc, you are easily able to use almost any voice you want
+- slower with bigger responses however
 ### make ur own features + commands
 - all commands are the elif statements that listen for the wakeword and whatever prompt is in there
 - this does come with some caveats, however.
@@ -27,6 +30,7 @@ requires the following:
 
 - linux x86 (tested on arch only)
 - python 3.12
+- torch??
 - vosk
 - ollama
 - tts_with_rvc 
