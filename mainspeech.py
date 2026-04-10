@@ -17,8 +17,8 @@ wakeword = 'hey computer'
 devid = 'default'
 q = queue.Queue()
 model = Model(r"vosk-model-small-en-us-0.15")
-tts = TTS_RVC(model_path="alek.pth",
-              index_path="alek.index",
+tts = TTS_RVC(model_path="urmodel.pth",
+              index_path="urindex.index",
               f0_method="rmvpe")
 tts.set_voice("en-US-JennyNeural") #FEMALE
 #tts.set_voice("en-US-BrianNeural") #MALE
