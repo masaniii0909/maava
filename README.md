@@ -16,12 +16,13 @@ highschool comp sci student's attempt at a hackable linux voice assistant that i
 - this does come with some caveats, however.
 ### premade commands 
 - some media control commands are already made!
+- timer
 - this can help you get started on adding more commands and features!
 ### future features
-- home assistant like features such as setting timers, telling stories, alarms, reminders, etc. 
+- home assistant like features such as telling stories, alarms, reminders, etc. 
 - asking for weather
 - have version a as a server
-- computer vision
+- computer vision??
 - chatbot??
 
 
