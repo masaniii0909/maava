@@ -31,7 +31,7 @@ requires the following:
 
 - linux x86 (tested on arch only)
 - python 3.12
-- torch??
+- word2number
 - vosk
 - ollama
 - tts_with_rvc 
