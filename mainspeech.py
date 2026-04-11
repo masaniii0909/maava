@@ -14,19 +14,18 @@ import subprocess as sp
 ############## WAKE WORD ###################
 wakeword = 'hey computer'
 ############## WAKE WORD ###################
-devid = 'default'
+print(sd.query_devices())
+try:
+    devid = 'pulse'
+except:
+    devid = 'default'
 q = queue.Queue()
 model = Model(r"vosk-model-small-en-us-0.15")
-tts = TTS_RVC(model_path="urmodel.pth",
-              index_path="urindex.index",
+tts = TTS_RVC(model_path="model.pth",
+              index_path="model.index",
               f0_method="rmvpe")
 tts.set_voice("en-US-JennyNeural") #FEMALE
 #tts.set_voice("en-US-BrianNeural") #MALE
-
-
-        ############################
-        ##### MAIN THINGAMAGIG #####
-        ############################
 
 def command(x):
     try:
@@ -37,10 +36,10 @@ def command(x):
 def say(x):
     text = x
     path = tts(text=text,
-            pitch=2,
+            pitch=1,
             tts_rate=12,
             output_filename="final.wav")
-    os.system("paplay ~/py-tests/tts-rvc/temp/final.wav &")
+    os.system("paplay temp/final.wav &")
 
 def gettime():
     hour = sp.check_output(["date +%I"], shell=True, text=True)
@@ -67,21 +66,28 @@ def main():
 
     with sd.RawInputStream(samplerate=16000, blocksize = 8000, device=devid,dtype="int16", channels=1, callback=callback):
         rec = KaldiRecognizer(model, 16000)
-        dosm = False
         while True:
             data = q.get()
+            anything = False # change this to have a convo with the ai or dont [as]
             if rec.AcceptWaveform(data):
                 result = rec.Result()
                 cleanresult = result[14:-3]
                 print(cleanresult)
+                print(cleanresult[0:-4])
+                print(f' result is {len(cleanresult)}')
+                print(f' wakeword is {len(wakeword)}')
                 if wakeword in result:
-                    cleanresult = cleanresult[(int(len(wakeword))):-3]
-                    print(cleanresult)
-                    print(((int(len(wakeword))) + (int(len(result))) - 11))
                     if f'{wakeword} stop' in result: 
                         command('playerctl pause &')
+                    
                     elif f'{wakeword} play' in result:
-                        command('playerctl play &')
+                        if 'music' in result:
+                            command('spotify-launcher &')
+                            say('playing music')
+                            es = os.system('playerctl play &')
+                        else:
+                            command('playerctl play &')
+
                     elif f'{wakeword} what time is it' in result:
                         gettime()
                     elif f"{wakeword} what's the time" in result:
@@ -92,51 +98,55 @@ def main():
                         command('playerctl pause &')
                     elif f'{wakeword} resume' in result:
                         command('playerctl play &')
-                    ### DONT EDIT THIS UNDER PLS ###
-                    elif wakeword in cleanresult and len(wakeword) == len(cleanresult):
-                        response = random.randrange(1,5,1)
-                        print(len(result))
-                        if response == 1:
-                            say("Yo!")
-                        if response == 2:
-                            say("Hey!")
-                        if response == 3:
-                            say("Hello to you too!")
-                        if response == 4:
-                            say("Hello!")
-                        if response == 5:
-                            say("Hiii!")
-                        else:
-                            pass
-                    elif len(cleanresult) > len(wakeword):
-                        print(result)
-                        response = random.randrange(1,5,1)
-                        if response == 1:
-                            say("Im not sure I understand!")
-                        if response == 2:
-                            say("What?")
-                        if response == 3:
-                            say("Im unsure of what to do")
-                        if response == 4:
-                            say("Im sorry?")
-                        if response == 5:
-                            say("I don't know what you said")
-                        else:
-                            pass
+                    elif f'{wakeword} set a timer for' in result:
+                        command(f'python TOOLS/timer.py --prompt {result}')
+                                        ### DONT EDIT THIS UNDER PLS ###
+                    elif wakeword in cleanresult:
+                        if len(wakeword) == len(cleanresult):
+                            response = random.randrange(1,5,1)
+                            print(len(result))
+                            if response == 1:
+                                say("Yo!")
+                            if response == 2:
+                                say("Hey!")
+                            if response == 3:
+                                say("Hi, what can I do for you!")
+                            if response == 4:
+                                say("Hello!")
+                            if response == 5:
+                                say("Hi!")
+                            else:
+                                pass
+                        elif len(cleanresult) > len(wakeword):
+                            response = random.randrange(1,5,1)
+                            if response == 1:
+                                say("Im not sure I understand!")
+                            if response == 2:
+                                say("What?")
+                            if response == 3:
+                                say("Im unsure of what to do")
+                            if response == 4:
+                                say("Im sorry?")
+                            if response == 5:
+                                say("I don't know what you said")
+                            else:
+                                pass
                     else: 
                         pass
+                else:
+                    pass
             else:
                 print(rec.PartialResult())
                 pass
 
 
-############# MAIN LOOP #######################
 
-def gotoai(x):
-    response: ChatResponse = chat(model='gemma2:2b', messages=[
+
+def gotoai(x): # still working on this
+    response: ChatResponse = chat(model='gemma3:1b', messages=[
   {
     'role': 'user',
-    'content': f'{x} (DO NOT USE EMOJIS, RESPOND IN NO LONGER THAN 3 SETENCES, IF THE QUESTION IS MORE COMPLICATED THEN YOU CAN, TRY TO KEEP IT SHORT!!)',
+    'content': f'{x}',
   },
 ])  
     command('clear')
@@ -152,6 +162,3 @@ while True:
     else:
         pass
     main()
-
-    
-    
