@@ -12,20 +12,20 @@ import random
 import time
 import subprocess as sp
 ############## WAKE WORD ###################
-wakeword = 'hey computer'
+wakeword = 'computer' 
 ############## WAKE WORD ###################
 print(sd.query_devices())
 try:
-    devid = 'pulse'
+    devid = 'pipewire'
 except:
     devid = 'default'
 q = queue.Queue()
-model = Model(r"vosk-model-small-en-us-0.15")
+model = Model(r"vosk-model-en-us-0.22")
 tts = TTS_RVC(model_path="model.pth",
               index_path="model.index",
               f0_method="rmvpe")
-tts.set_voice("en-US-JennyNeural") #FEMALE
-#tts.set_voice("en-US-BrianNeural") #MALE
+#tts.set_voice("en-US-JennyNeural") #FEMALE
+tts.set_voice("en-US-BrianNeural") #MALE
 
 def command(x):
     try:
@@ -39,14 +39,12 @@ def say(x):
             pitch=1,
             tts_rate=12,
             output_filename="final.wav")
-    os.system("paplay temp/final.wav &")
+    os.system("paplay temp/final.wav")
 
 def gettime():
     hour = sp.check_output(["date +%I"], shell=True, text=True)
     min = sp.check_output(["date +%M"], shell=True, text=True)
-    if '0' in hour:
-        hour = hour[1]
-    elif min == '00':
+    if min == '00':
         min = 'o clock'
     else:
         pass
@@ -72,6 +70,7 @@ def main():
             if rec.AcceptWaveform(data):
                 result = rec.Result()
                 cleanresult = result[14:-3]
+                tokenz = cleanresult.split()
                 print(cleanresult)
                 print(cleanresult[0:-4])
                 print(f' result is {len(cleanresult)}')
@@ -92,14 +91,21 @@ def main():
                         gettime()
                     elif f"{wakeword} what's the time" in result:
                         gettime()
+                    elif f'{wakeword} what does the time' in result:
+                        gettime()
                     elif f'{wakeword} what is the time' in result:
                         gettime()
+                    elif f'{wakeword} say' in result:
+                        try:
+                            say(f'{cleanresult[13::]}')
+                        except:
+                            pass
                     elif f'{wakeword} pause' in result:
                         command('playerctl pause &')
                     elif f'{wakeword} resume' in result:
                         command('playerctl play &')
                     elif f'{wakeword} set a timer for' in result:
-                        command(f'python TOOLS/timer.py --prompt {result}')
+                        command(f'python TOOLS/timer.py --prompt "{cleanresult}"')
                                         ### DONT EDIT THIS UNDER PLS ###
                     elif wakeword in cleanresult:
                         if len(wakeword) == len(cleanresult):
