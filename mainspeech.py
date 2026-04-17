@@ -9,9 +9,6 @@ from ollama import ChatResponse
 import random
 import time
 import subprocess as sp
-
-from TOOLS import search
-
 ############## WAKE WORD ###################
 wakeword = 'computer'
 agentname = 'Omni man'
