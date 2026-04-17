@@ -11,7 +11,7 @@ import time
 import subprocess as sp
 ############## WAKE WORD ###################
 wakeword = 'computer'
-agentname = 'Omni man'
+agentname = 'name'
 ############## WAKE WORD ###################
 print(sd.query_devices())
 try:
