@@ -4,22 +4,21 @@ import os
 from tts_with_rvc import TTS_RVC
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
-from ollama import chat
-from ollama import ChatResponse
+from ollama import chat, ChatResponse
 import random
-import time
+from word2number import w2n
 import subprocess as sp
 ############## WAKE WORD ###################
-wakeword = 'computer'
-agentname = 'name'
+wakeword = 'morgan'
+agentname = 'morgan'
 ############## WAKE WORD ###################
 print(sd.query_devices())
 try:
-    devid = 'pipewire'
+    devid = 'pulse'
 except:
     devid = 'default'
 q = queue.Queue()
-model = Model(r"vosk-model-small-en-us-0.15")
+model = Model(r"vosk-model-en-us-0.42-gigaspeech")
 tts = TTS_RVC(model_path="model.pth",
               index_path="model.index",
               f0_method="rmvpe")
@@ -40,17 +39,18 @@ def command(x):
 def say(x):
     text = x
     path = tts(text=text,
-            pitch=2,
-            tts_rate=12,
+            pitch=-6,
+            tts_rate=-2,
             output_filename="final.wav")
-    os.system("paplay temp/final.wav &")
+    os.system("paplay temp/final.wav ")
+def set_volume(x):
+    command(f'pactl set-sink-volume $(pactl get-default-sink) {x}%')
+    
 
 def gettime():
     hour = sp.check_output(["date +%I"], shell=True, text=True)
     min = sp.check_output(["date +%M"], shell=True, text=True)
-    if '0' in hour:
-        hour = hour[1]
-    elif min == '00':
+    if min == '00':
         min = 'o clock'
     else:
         pass
@@ -59,7 +59,6 @@ def gettime():
 
 def main():
     q = queue.Queue()
-    model = Model(r"vosk-model-small-en-us-0.15")
     rec = KaldiRecognizer(model, 8000)
     
     def callback(indata, frames, time, status):
@@ -72,50 +71,76 @@ def main():
         rec = KaldiRecognizer(model, 16000)
         while True:
             data = q.get()
-            anything = False # change this to have a convo with the ai or dont [as]
             if rec.AcceptWaveform(data):
                 result = rec.Result()
-                cleanresult = result[len(wakeword):-3]
-                print(cleanresult, flush=True)
+                cleanresult = result[14:-3]
+                print(cleanresult)
+                print(cleanresult[0:-4])
+                print(f' result is {len(cleanresult)}')
+                print(f' wakeword is {len(wakeword)}')
                 if 'alexa' in result:
-                    say(f'who are you calling alexa? my name is {agentname} and I will only respond to {wakeword}')
+                    say(f'Who is this, Alexa, you speak of. My name is {agentname} and I will only respond to {wakeword}')
                 if wakeword in result:
-                    if f'{wakeword} stop' in result: 
+# MUSIC AND PLAYBACK
+                    if ' stop' in result: 
                         command('playerctl pause &')
                         try:
                             command('kill $(pgrep -f timer.py)')
                         except:
                             pass
-                    elif f'{wakeword} play' in result:
+                    elif ' play' in result:
                         if 'music' in result:
                             command('spotify-launcher &')
                             say('playing music')
                             es = os.system('playerctl play &')
                         else:
                             command('playerctl play &')
-
-                    elif f'{wakeword} what is' in result:
-                        # noinspection PyUnreachableCode
-                        if f'{wakeword} what is the time':
-                            gettime()
-                        elif f'{wakeword} what is the weather in':
-                            weath_req = (f'{cleanresult.split('what is the')[1]}')
-                            print(weath_req)
-                            temp = sp.check_output([f'python3 TOOLS/weather.py --prompt "{weath_req}"'], shell=True,
-                                                   text=True)
-                            say(f'the {weath_req} is {temp}degrees Fahrenheit')
-
-                        else:
-                            search = sp.check_output([f'python3 TOOLS/search.py --prompt "{cleanresult.split({wakeword})[1]}'])
-                            say(search)
-                    elif f'{wakeword} resume' in result:
+                    elif ' resume' in result:
                         command('playerctl play &')
-                    elif f'{wakeword} what is the weather in' in result:
-                        weath_req = (f'{cleanresult.split('what is the')[1]}')
-                        print(weath_req)
-                        temp = sp.check_output([f'python3 TOOLS/weather.py --prompt "{weath_req}"'], shell=True, text=True)
-                        say(f'the {weath_req} is {temp}degrees Fahrenheit')
-                        time.sleep(5)
+                    elif ' skip' in result:
+                        command('playerctl next &')
+                    elif ' rewind' in result:
+                        command('playerctl previous &')
+                    elif ' previous song' in result or ' previous' in result:
+                        command('playerctl previous &')
+                        command('playerctl previous &')
+                    elif ' volume' in result or ' set volume' in result:
+                        set_volume(w2n.word_to_num(cleanresult.split('volume')[1]))
+# IF WAKEWORD + WHAT or WHAT'S
+                    elif ' what' in result:
+# TIME
+                        if 'time is it' in result:
+                            gettime()
+                        elif 'what is' in result or f"{wakeword} what's": # what is or what's
+                            if 'the' in result:                           #         the
+                                if 'time' in result:                      #         time
+                                    gettime()
+# WEATHER
+                                elif 'weather' in result:                 # what is the weather / what's the weather
+                                    weath_req = (f'{cleanresult.split('what is the ')[1]}')
+                                    print(weath_req)
+                                    temp = sp.check_output([f'python3 TOOLS/weather.py --prompt "{weath_req}"'], shell=True, text=True)
+                                    say(f'the {weath_req} is {temp} degrees fahrenheit')
+# SEARCHING 
+                                elif ' name of' in result:
+                                    if 'name of this song' in result:
+                                        say('idk gang')
+                                    else:
+                                        search(cleanresult.split(f'{wakeword}')[1])
+                                else:                                    
+                                    print(cleanresult.split(f'{wakeword}')[1])  # what is the / what's the ____
+                                    search(cleanresult.split(f'{wakeword}')[1])
+# MATH
+                            elif 'times' in result or 'plus' in result or 'divided by' in result or 'minus' in result:
+                                gotoai(cleanresult, "dont explain the answer")
+                            elif ' your purpose' in result:
+                                say("my purpose is to help you")
+                            else:
+                                search(cleanresult.split(f'{wakeword}')[1])
+# WHAT DO
+                        elif ' do' in result:
+                            search(cleanresult.split(f'{wakeword}')[1])
+                                        
                     elif f'{wakeword} set a timer for' in result:
                         command(f'python TOOLS/timer.py --prompt "{cleanresult}" &')
                                         ### DONT EDIT THIS UNDER PLS ###
@@ -154,17 +179,17 @@ def main():
                 else:
                     pass
             else:
-                print(rec.PartialResult(), flush=True)
+                print(rec.PartialResult())
                 pass
 
 
 ############# MAIN LOOP #######################
 
-def gotoai(x):
+def gotoai(x, y):
     response: ChatResponse = chat(model='gemma3:1b', messages=[
   {
     'role': 'user',
-    'content': f'{x}',
+            'content': f'{x}. ({y})',
   },
 ])  
     command('clear')
@@ -174,9 +199,12 @@ def gotoai(x):
 
 
 x = False
-while __name__ == '__main__':
+while True:
     if x == False:
         say(f'test')
     else:
         pass
     main()
+
+    
+    
