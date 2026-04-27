@@ -8,7 +8,8 @@ import websockets
 import logging
 import sounddevice as sd
 import queue
-
+ip = #.#.#.#
+port = 2700
 from vosk import Model, KaldiRecognizer
 
 def callback(indata, frames, time, status):
@@ -48,10 +49,10 @@ async def main():
     loop = asyncio.get_running_loop()
     clients = set()
 
-    logging.info("Listening on %s:%d", '192.168.0.13', 2700)
+    logging.info("Listening on %s:%d", ip, port)
 
     await asyncio.gather(
-        websockets.serve(serve_client, '192.168.0.13', 2700),
+        websockets.serve(serve_client, ip, port),
                          recognize_microphone())
 
 if __name__ == '__main__':
